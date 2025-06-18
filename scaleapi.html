@@ -1,0 +1,663 @@
+<!DOCTYPE html><html>
+<head>
+    <title>SCALE API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.jpg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Highlight.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <!-- Popup Navigation Container -->
+    <div id="popupNavi" class="popupNavi">
+        <!-- Links inside the popup -->
+        <div class="popup-navi-links">
+            <p class="ptext-minimal">Navigation Simplified: NAVI.  
+                <button class="nmap-button-blue" onclick="togglePopup()">Close NAVI</button>
+            </p>
+            <a href="/" class="nmap-button">Home</a>
+        </div>
+    </div>
+
+    <h1>
+        <a href="/webaddash" class="nmap-button"><</a>SCALE API
+    </h1>
+    <p>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes_success">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </p>
+    
+    <!-- Button to trigger the popup -->
+    <button class="nmap-button-blue" onclick="togglePopup()">NAVI</button>
+    <a href="{{ url_for('scale_api', cmd='login') }}" class="nmap-button-green">Auth SCALE</a>                        <!-- This triggers a gen_sessionID check so a valid session cane be made. -->
+    <a href="{{ url_for('scale_api', cmd='logout') }}" class="nmap-button-red-alt">DeAuth SCALE</a>                   <!-- This triggers a kil_sessionID so a session may be invalidated. -->
+    <a href="{{ url_for('scale_api_page') }}" class="nmap-button-yellow">Reset this Page</a>                           <!-- This triggers a refresh of the page. -->
+    <a href="" target="_blank" class="nmap-button-red-alt">SCALE GUI</a>                                               <!-- This triggers a new tab window to the URL -->
+    
+
+    <p class="gray-text">This page is meant to be used to find information on SCALE
+        <br> via the REST API over Basic Auth. You can get current information on much items. <br>
+        <br> Disclaimer: This page is hosted on nmap-x but displayed as if it is hosted on PubDocs.
+    </p>
+
+    
+
+    <button onclick="toggleForm('infoModal_cluster')" class="nmap-button">Basic Cmds</button>     <!-- This triggers the Cluster Options Menu -->
+    <button onclick="toggleForm('infoModal_Smtp')" class="nmap-button">SMTP Cmds</button>         <!-- This triggers the SMTP Options Menu -->
+    <button onclick="toggleForm('infoModal_SnapShot')" class="nmap-button">Snaphot Cmds</button>  <!-- This triggers the Snapshot Options Menu -->
+    <button onclick="toggleForm('infoModal_VDI')" class="nmap-button">VM Cmds</button>            <!-- This triggers the VDI Options Menu -->
+    
+    <div id="infoModal_cluster" class="modal_info"> <!-- This is the display pop up for the Cluster Options Menu-->
+        <p class="ptext_modal">Basic Commands <span onclick="toggleForm('infoModal_cluster')" style="cursor: pointer; color: red; font-size: 20px;">&times;</span> </p>
+        <a href="{{ url_for('scale_api_cluster', cmd='ping') }}" class="nmap-button">STATUS: Cluster Availability</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='status') }}" class="nmap-button">STATUS: Cluster Status</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='ping_remote') }}" class="nmap-button">STATUS: Remote Zayo Cluster Link</a>
+        <br><br><br>
+        <p class="ptext_modal">Basic CMDs: Information</p>
+        <a href="{{ url_for('scale_api_cluster', cmd='conditions') }}" class="nmap-button-blue">INFO: Cluster Conditions</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='conditions_filter-set') }}" class="nmap-button-blue">INFO: Cluster Conditions [Only 'Set']</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='conditions_filter-notok') }}" class="nmap-button-blue">INFO: Cluster Conditions [Only 'NOTOK']</a>
+        <br><br>
+        <a href="{{ url_for('scale_api_cluster', cmd='config_drives') }}" class="nmap-button-blue">INFO: Cluster Connected Phys Drives</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='config_dns') }}" class="nmap-button-blue">INFO: Cluster DNS Config</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='nodes') }}" class="nmap-button-blue">INFO: Cluster Nodes</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='registration') }}" class="nmap-button-blue">INFO: Cluster Registration</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='roles') }}" class="nmap-button-blue">INFO: Cluster Role UUIDs</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='timesources') }}" class="nmap-button-blue">INFO: Cluster TimeSources</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='isos') }}" class="nmap-button-blue">INFO: Uploaded ISOs</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='virt_drives') }}" class="nmap-button-blue">INFO: Uploaded Virtual Disks</a>
+        <br><br><br>
+        <p class="ptext_modal">Basic CMDs: Updates</p>
+        <a href="{{ url_for('scale_api_cluster', cmd='updates_get') }}" class="nmap-button-blue">UPDATES: Get Updates</a>
+        <a href="{{ url_for('scale_api_cluster', cmd='updates_apply') }}" class="nmap-button-green">UPDATES: Apply Updates</a>
+        <br><br><br>
+        <p class="ptext_modal">Basic CMDs: User Control</p>
+        <a href="{{ url_for('scale_api_cluster', cmd='users') }}" class="nmap-button">USER: Information</a>
+        <button onclick="toggleForm('infoModal_UserCreate')" class="nmap-button-green">USER: Create</button>
+        <br><br><br>
+    </div>
+
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the User Create Menu -->
+        <form id="infoModal_UserCreate" action="{{ url_for('scale_api_user_create') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="name" class="poptext">Create a New User</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="uname" class="gray-text-label">UserName:</label>
+                    <input type="text" name="uname" placeholder="user.." required>
+                </li>
+                <li>
+                    <label for="pswd" class="gray-text-label">Password:</label>
+                    <input type="password" name="pswd" placeholder="pswd.." required>
+                </li>
+                <li>
+                    <label for="fullName" class="gray-text-label">Full Name:</label>
+                    <input type="text" name="fullName" placeholder="FirstName LastName.." required>
+                </li>
+                <li>
+                    <label for="roleuuids" class="gray-text-label">Role UUID's:</label>
+                    <input type="text" name="roleuuids" placeholder="Enter Multiple with ',' in between." required>
+                    <p class="gray-text-defs">Example UUID: 417a9cf1-69aa-41ff-a650-9cb88dd350f0 for admin</p>
+                </li>
+                <li>
+                    <label for="sessionLimit" class="gray-text-label">Session Limit:</label>
+                    <input type="text" name="sessionLimit" placeholder="0-999" value="0" required>
+                    <p class="gray-text-defs">Refers to how many sessions this user can have open at 1 time..</p>
+                </li>
+            </ul>
+            <input type="submit" value="Create User" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_UserCreate')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the SnapShots Create Menu -->
+        <form id="infoModal_SnapCreate" action="{{ url_for('scale_api_snapshots_create') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="snapshot_name" class="poptext">Create a New SnapShot</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="snap_UUID" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="snap_UUID" placeholder="VM UUID goes here.." required>
+                </li>
+                <li>
+                    <label for="snap_label" class="gray-text-label">Label:</label>
+                    <input type="text" name="snap_label" placeholder="Label goes here.." required>
+                </li>
+                <li>
+                    <label for="snap_type" class="gray-text-label">Type:</label>
+                    <input type="text" name="snap_type" placeholder="USER.." required>
+                </li>
+                <li>
+                    <label for="automatedTriggerTimestamp" class="gray-text-label">Trigger Timestamp:</label>
+                    <input type="text" name="automatedTriggerTimestamp" placeholder="0" value="0" required>
+                    <p class="gray-text-defs">Leave defaults if not known</p>
+                </li>
+                <li>
+                    <label for="localRetainUntilTimestamp" class="gray-text-label">Local Retention:</label>
+                    <input type="text" name="localRetainUntilTimestamp" placeholder="0" value="0" required>
+                    <p class="gray-text-defs">Leave defaults if not known</p>
+                </li>
+                <li>
+                    <label for="remoteRetainUntilTimestamp" class="gray-text-label">Remote Retention:</label>
+                    <input type="text" name="remoteRetainUntilTimestamp" placeholder="0" value="0" required>
+                    <p class="gray-text-defs">Leave defaults if not known</p>
+                </li>
+                <li>
+                    <label for="blockCountDiffFromSerialNumber" class="gray-text-label">Block Diff based on Serial Number:</label>
+                    <input type="text" name="blockCountDiffFromSerialNumber" placeholder="-1" value="-1" required>
+                    <p class="gray-text-defs">Leave defaults if not known</p>
+                </li>
+                <li>
+                    <label for="replication" class="gray-text-label">Replication (T/F):</label>
+                    <input type="text" name="replication" placeholder="true" value="true" required>
+                    <p class="gray-text-defs">Leave defaults if not known</p>
+                </li>
+            </ul>
+            <input type="submit" value="Create Snapshot" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_SnapCreate')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI basic Search Menu -->
+        <form id="infoModal_VDI_search" action="{{ url_for('scale_api_vdi_search') }}" method="get" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_search_name" class="poptext">Search for a VDI</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="vmUUID" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="vmUUID" id="vmUUID" placeholder="VM UUID goes here.." required>
+                    <input type="text" name="search_choice" id="search" value="vdi_search" hidden>
+                    <p class="gray-text-defs">You can find VDI UUID's on <a href="/symconsoles" target="_blank">Console Assignments.</a> </p>
+                </li>
+            </ul>
+            <input type="submit" value="Search for VDI" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_search')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Statistics Search Menu  -->
+        <form id="infoModal_VDI_searchStats" action="{{ url_for('scale_api_vdi_search') }}" method="get" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_searchStats_name" class="poptext">Get VDI Status (Live)</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="vmUUID" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="vmUUID" id="vmUUID" placeholder="VM UUID goes here.." required>
+                    <input type="text" name="search_choice" id="search" value="vdi_stats_search" hidden>
+                    <p class="gray-text-defs">You can find VDI UUID's on <a href="/symconsoles" target="_blank">Console Assignments.</a> </p>
+                </li>
+            </ul>
+            <input type="submit" value="Get VDI Status" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_searchStats')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Block Device Search Menu -->
+        <form id="infoModal_VDI_search_block" action="{{ url_for('scale_api_vdi_search') }}" method="get" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_search_block_name" class="poptext">Search for a VDI Stor (Block) Device</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="vmUUID" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="vmUUID" id="vmUUID" placeholder="VM UUID goes here.." required>
+                    <input type="text" name="search_choice" id="search" value="vdi_block_search" hidden>
+                    <p class="gray-text-defs">You can find VDI UUID's on <a href="/symconsoles" target="_blank">Console Assignments.</a> </p>
+                </li>
+            </ul>
+            <input type="submit" value="Search for Block Devices" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_search_block')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Create Menu -->
+        <form id="infoModal_VDI_create" action="{{ url_for('scale_api_vdi_create') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="VDI_name" class="poptext">Create a New VDI (PXE)</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="VDI_name" class="gray-text-label">Name:</label>
+                    <input type="text" name="VDI_name" placeholder="Enter a name for this new VDI.." required>
+                </li>
+                <li>
+                    <label for="VDI_description" class="gray-text-label">Assigned to:</label>
+                    <input type="text" name="VDI_description" placeholder="Nelson O." required>
+                </li>
+                <li>
+                    <label for="VDI_dept" class="gray-text-label">Assigned User Dept:</label>
+                    <select name="VDI_dept" id="VDI_dept_create" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="ACCT">Accounting</option>
+                        <option value="ADMIN">Administration</option>
+                        <option value="vFSR">Fin. Service. Rep.</option>
+                        <option value="IT">Information Tech.</option>
+                        <option value="LEND">Lending</option>
+                        <option value="MARKET">Marketing</option>
+                        <option value="vMPT">Aurora MSR (Teller/Call Center)</option>
+                        <option value="vJTL">Jefco MSR (Teller/Call Center)</option>
+                    </select> 
+                    <br><br>
+                </li>
+                <li>
+                    <label for="VDI_os" class="gray-text-label">OS:</label>
+                    <select name="VDI_os" id="VDI_os_create" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="os_windows_server_2012">Windows</option>
+                        <option value="Other">Other</option>
+                    </select> 
+                </li>
+                <li>
+                    <label for="VDI_cpu" class="gray-text-label">CPU vCores:</label>
+                    <input type="text" name="VDI_cpu" placeholder="4 is default, 6 if user is a powerU.." value="4" required>
+                    <p class="gray-text-defs">Leave defaults if unknown</p>
+                </li>
+                <li>
+                    <label for="VDI_cpuType" class="gray-text-label">CPU Type:</label>
+                    <input type="text" name="VDI_cpuType" placeholder="intel-core-cascadelake-amd64-9.4 is default. or clusterBaseline-7.3 .." value="intel-core-cascadelake-amd64-9.4" required>
+                    
+                    <label for="VDI_cpuType" class="gray-text-label">vCPU Gen:</label>
+                    <select name="VDI_cpuType" id="VDI_cpuType_create" class="gray-text" required>
+                        <option value="intel-core-cascadelake-amd64-9.4">Intel CascadeLake (2018)</option>
+                        <option value="clusterBaseline-7.3">Intel Haswell (2014)</option>
+                    </select>
+                    <p class="gray-text-defs">Leave defaults if unknown</p>
+                </li>
+                <li>
+                    <label for="VDI_machineType" class="gray-text-label">vMachine Type:</label>
+                    <select name="VDI_machineType" id="VDI_machineType_create" class="gray-text" required>
+                        <option value="scale-uefi-tpm-9.3">vTPM UEFI, Default</option>
+                        <option value="scale-8.10">UEFI</option>
+                        <option value="scale-bios-9.3">BIOS, Legacy</option>
+                    </select> 
+                    <p class="gray-text-defs">Leave defaults if unknown</p>
+                </li>
+                <li>
+                    <label for="VDI_memory" class="gray-text-label">Memory (RAM, Bytes):</label>
+                    <p class="gray-text-defs">Leave defaults (8GiB) if unknown</p>
+                    <input type="text" name="VDI_memory" placeholder="8589934592 (8GiB) is default.." value="8589934592" required>
+    
+                </li>
+                <li>
+                    <label for="VDI_blockDev" class="gray-text-label">Block Devices (Storage, Bytes):</label>
+                    <p class="gray-text-defs">Leave defaults (225GiB) if unknown</p>
+                    <input type="text" name="VDI_blockDev" placeholder="225000000000, 215 GiBs is default.." value="225000000000" required>
+                    
+                    <br><br>
+
+                    <label for="VDI_blockDevType" class="gray-text-label">Storage Type:</label>
+                    <p class="gray-text-defs">Leave defaults (VIRTIO) if unknown</p>
+                    <select name="VDI_blockDevType" id="VDI_blockDevType_create" class="gray-text" required>
+                        <option value="VIRTIO_DISK" selected>VIRTIO bus type, default</option>
+                        <option value="IDE_DISK">IDE drive type, used for compatibility</option>
+                        <option value="SCSI_DISK">VIRTIO SCSI bus type</option>
+                        <option value="IDE_CDROM">IDE CD-ROM bus type</option>
+                        <option value="IDE_FLOPPY">IDE Floppy bus type, .vfd files</option>
+                        <option value="NVRAM">NVRAM type, used VMs that use UEFI</option>
+                        <option value="VTPM">VTPM type, used to mount VSDs</option>
+                    </select> 
+                    <br><br>
+                    <label for="VDI_blockDevCache" class="gray-text-label">Caching:</label>
+                    <select name="VDI_blockDevCache" id="VDI_blockDevCache_create" class="gray-text" required>
+                        <option value="NONE">NONE</option>
+                        <option value="WRITEBACK">WRITEBACK</option>
+                        <option value="WRITETHROUGH" selected>WRITETHROUGH</option>
+                    </select> 
+                </li>
+                <li>
+                    <br><br><br>
+                    <label for="VDI_netDev" class="gray-text-label">Network Device:</label>
+                    <select name="VDI_netDev" id="VDI_netDevs_create" class="gray-text" required>
+                        <option value="VIRTIO" selected>KVM VIRTIO, Best Performance</option>
+                        <option value="RTL1839">RTL8139, KVM Default</option>
+                        <option value="INTEL_E1000">Intel E1000, Most Compatible</option>
+                        <option value="PCNET">PC NET, early OS Support</option>
+                    </select> 
+                    <br>
+                    <label for="VDI_netDevVLAN" class="gray-text-label">vLAN:</label>
+                    <select name="VDI_netDevVLAN" id="VDI_netDevs_create" class="gray-text" required>
+                        <option value="1" selected>1, Workstations</option>
+                        <option value="33">33, Servers</option>
+                        <option value="44">44, Phones (corp)</option>
+                        <option value="45">45, Phones (branch)</option>
+                    </select> 
+                    <br>
+                    <label for="VDI_iso" class="gray-text-label">ISO To Attach:</label>
+                    <select name="VDI_iso" id="VDI_iso" class="gray-text" required>
+                        <option value="2c1c0864-12f7-44bc-bcc1-13ef4415dbed" selected>Clientboot 1.5.6 for s.53 [Secure Boot]</option>
+                        <option value="4598846f-bc77-4889-97e5-794d93a79824">Clientboot 1.5.6 for s.53 [No SB]</option>
+                        <option value="701dcff5-3390-450d-b36a-7f827dfefc16">Clientboot 1.5.6 for s.99 [No SB]</option>
+                        <option value="8d6069e9-8e00-4771-8471-1dcdcb6bcbaf">GParted 1.6.0-3</option>
+                        <option value="58a832f5-b77b-49f0-8917-80af3aa87b08">Debian 12.9</option>
+                        <option value="2618fa87-ec57-412a-97f1-4a90034d9090">Manjaro Linux: kde 24.2.1-241216</option>
+                        <option value="544405f3-9875-4668-b3cd-a798267597af">Arch Linux 2025.03.01</option>
+                        <option value="bc520b68-0ae3-4e16-b67b-314fdf08fb61">Rocky Linux 8.10</option>
+                        <option value="bb5a36b4-6fc3-44c9-bc25-f2600a13f66a">Ubuntu Linux 24.04.1</option>
+                        <option value="f589c5e2-5ae7-4d39-8f5e-b3c9c86f89a6">WinServer 2022 EVAL</option>
+                        <option value="7fc08795-f920-442a-b9d2-3a96486b0686">WinServer 2025 EVAL</option>
+                        <option value="fd9d5e1e-fe62-49a5-818a-23983b552309">Windows 10 22H2</option>
+                        <option value="50dca826-ab0a-49f6-85e1-2eb2ac91f4d6">Windows 11 24H2</option>
+                    </select> 
+                </li>
+            </ul>
+            <input type="submit" value="Create VDI!" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_create')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Clone Menu -->
+        <form id="infoModal_VDI_clone" action="{{ url_for('scale_api_vdi_clone') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_clone_name" class="poptext">Clone a VDI</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="VDI_name" class="gray-text-label">Name:</label>
+                    <input type="text" name="VDI_name" placeholder="Enter a name for this new VDI.." required>
+                </li>
+                <li>
+                    <label for="VDI_description" class="gray-text-label">Assigned to:</label>
+                    <input type="text" name="VDI_description" placeholder="Nelson O." required>
+                </li>
+                <li>
+                    <label for="VDI_dept" class="gray-text-label">Assigned User Dept:</label>
+                    <select name="VDI_dept" id="VDI_dept_create" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="ACCT">Accounting</option>
+                        <option value="ADMIN">Administration</option>
+                        <option value="vFSR">Fin. Service. Rep.</option>
+                        <option value="ITpcs">Information Tech.</option>
+                        <option value="LEND">Lending</option>
+                        <option value="MRKT">Marketing</option>
+                        <option value="vMPT">Aurora MSR (Teller/Call Center)</option>
+                        <option value="vJTL">Jefco MSR (Teller/Call Center)</option>
+                    </select> 
+                    <br><br>
+                </li>
+                <li>
+                    <label for="vmUUID" class="gray-text-label">Template VM to Clone:</label>
+                    <select name="vmUUID" id="vmUUID" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="d4bcdd50-9a71-4575-bdcd-140ae5b5f02e">W11P-2025-VDI-V1</option>
+                        <option value="fd866936-fca6-46c2-8d9b-b1010b896d92">W11P-2025-VC</option>
+                        <option value="be1d9f2b-90dd-4817-a6e2-334268d47050">Template-Debian-12</option>
+                        <option value="4c592611-fe57-4a77-9d4c-be4dfcc39a8a">Template-Arch-2025.03.01</option>
+                    </select>
+                </li>
+            </ul>
+            <input type="submit" value="Clone VDI" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_clone')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Power Status Menu -->
+        <form id="infoModal_VDI_change" action="{{ url_for('scale_api_vdi_change') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_change_name" class="poptext">Change VDI Status</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="VDI_uuid" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="VDI_uuid" placeholder="Enter VDI UUID.." required>
+                </li>
+                <li>
+                    <label for="VDI_desiredState" class="gray-text-label">Action:</label>
+                    <select name="VDI_desiredState" id="VDI_desiredState_choose" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="START">Start VDI</option>
+                        <option value="SHUTDOWN">Gracefully Shutdown VDI</option>
+                        <option value="STOP">Immediately halt VDI</option>
+                        <option value="PAUSE">Suspend VDI</option>
+                        <option value="REBOOT">Gracefully Reboot VDI</option>
+                        <option value="RESET">Reset VDI immediately. (Unsafe)</option>
+                        <option value="LIVEMIGRATE">Live migrate a running domain to the given node:</option>
+                        <option value="NMI">Send a Non-Maskable Interrupt to the VM. (Diagnostics)</option>
+                    </select> 
+                    <br><br> 
+                </li>
+                <li>
+                    <label for="VDI_desiredSate_why" class="gray-text-label">Cause:</label>
+                    <input type="text" name="VDI_desiredSate_why" placeholder="Enter why you want this action done.." required>
+                </li>
+                <li>
+                    <label for="VDI_desiredSate_nodemigrateUUID" class="gray-text-label">Node to Migrate to (Only required for Live Migrate):</label>
+                    <select name="VDI_desiredSate_nodemigrateUUID" id="VDI_desiredSate_nodemigrateUUID_choose" class="gray-text" required>
+                        <option value="DEFAULT" selected>Select..</option>
+                        <option value="NODE1">Node 1 (172.18.33.215)</option>
+                        <option value="NODE2">Node 2 (172.18.33.216)</option>
+                        <option value="NODE3">Node 3 (172.18.33.217)</option>
+                    </select> 
+            </ul>
+            <input type="submit" value="Perform Action on VDI" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_change')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the VDI Property Edit Menu -->
+        <form id="infoModal_VDI_switch" action="{{ url_for('scale_api_vdi_switch') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="vdi_change_name" class="poptext">Change VDI Properties</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="VDI_uuid" class="gray-text-label">VM UUID:</label>
+                    <input type="text" name="VDI_uuid" placeholder="Enter VDI UUID.." required>
+                </li>
+                <li>
+                    <label for="VDI_desired_cpuType" class="gray-text-label">CPU Type:</label>
+                    <select name="VDI_desired_cpuType" id="VDI_desired_cpuType" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="HC1150-9.2">HC1150-9.2 (UEFI/BIOS, old - avoid)</option>
+                        <option value="clusterBaseline-7.3">intel-core-haswell (UEFI/BIOS, newer)</option>
+                        <option value="intel-core-skylake-amd64-9.3">intel-core-skylake (Newest + vTPM 2.0)</option>
+                        <option value="intel-core-cascadelake-amd64-9.4">intel-core-cascadelake (Newest + vTPM 2.0)</option>
+                        
+                    </select> 
+                    <br><br> 
+                </li>
+                <li>
+                    <label for="VDI_desired_machineType" class="gray-text-label">Machine Type:</label>
+                    <select name="VDI_desired_machineType" id="VDI_desired_machineType" class="gray-text" required>
+                        <option value="" disabled selected>Select..</option>
+                        <option value="scale-7.2">BIOS (oldest, avoid)</option>
+                        <option value="scale-bios-9.3">BIOS (newer)</option>
+                        <option value="scale-uefi-9.3">UEFI (no TPM)</option>
+                        <option value="scale-uefi-tpm-compatible-9.3">UEFI (TPM 1.2, Compatible Version)</option>
+                        <option value="scale-uefi-tpm-9.3">UEFI (TPM 2.0, newest)</option>
+                    </select> 
+                    <br><br> 
+            </ul>
+            <input type="submit" value="Perform Action on VDI" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_VDI_switch')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+
+    <div class="centered-container-alt"> <!-- This is the display pop up for the Alert Target Create Menu -->
+        <form id="infoModal_alerts_create" action="{{ url_for('scale_api_alerts_create') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="alert_name" class="poptext">Create New Alert Target</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="alert_TagUUID" class="gray-text-label">Name:</label>
+                    <input type="text" name="alert_TagUUID" placeholder="Enter the UUID of the Alert Tag.." required>
+                </li>
+                <li>
+                    <label for="alert_email" class="gray-text-label">Assigned to (email):</label>
+                    <input type="text" name="alert_email" placeholder="it@spaceagecu.org" required>
+                </li>
+                <li>
+                    <label for="alert_sendDelay" class="gray-text-label">reSend Delay:</label>
+                    <p class="gray-text-defs">Leave defaults if unknown</p>
+                    <select name="alert_sendDelay" id="alerts_create" class="gray-text" required>
+                        <option value="0" selected>0</option>
+                        <option value="1">1</option>
+                        <option value="5">5</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select> 
+                    <br><br>
+                </li>
+                <li>
+                    <label for="alert_sp" class="gray-text-label">Silent Period:</label>
+                    <p class="gray-text-defs">Leave defaults if unknown</p>
+                    <input type="text" name="alert_sp" value="0" placeholder="0, leave as default if unknown.." required>
+                </li>
+            </ul>
+            <input type="submit" value="Create Alert Target" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_alerts_create')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+    <div class="centered-container-alt">  <!-- This is the display pop up for the SMTP Alert Create Menu -->
+        <form id="infoModal_alerts_smtp_create" action="{{ url_for('scale_api_alerts_smtp_create') }}" method="post" class="popup-form-create">
+            <div class="poptextbanner">
+                <label for="alerts_smtp_name" class="poptext">Add SMTP Server</label>
+            </div>
+            <ul>
+                <li>
+                    <label for="alert_smtpServer" class="gray-text-label">SMTP Server:</label>
+                    <input type="text" name="alert_smtpServer" placeholder="Enter IP for SMTP Server.." required>
+                </li>
+                <li>
+                    <label for="alert_port" class="gray-text-label">Assigned to:</label>
+                    <input type="text" name="alert_port" placeholder="Nelson O." required>
+                </li>
+                <li>
+                    <label for="alert_SSL" class="gray-text-label">Use SSL:</label>
+                    <select name="alert_SSL" id="alert_SSL_create" class="gray-text" required>
+                        <option value="false" selected>false</option>
+                        <option value="true">true</option>
+                    </select> 
+                </li>
+                <li>
+                    <label for="alert_auth" class="gray-text-label">Use Auth:</label>
+                    <select name="alert_auth" id="alert_uauth_create" class="gray-text" required>
+                        <option value="true" selected>true</option>
+                        <option value="false">false</option>
+                    </select> 
+                </li>
+                <li>
+                    <label for="alert_aUser" class="gray-text-label">Auth User:</label>
+                    <input type="text" name="alert_aUser" placeholder="Auth'd User for SMTP" required>
+                </li>
+                <li>
+                    <label for="alert_aPass" class="gray-text-label">Auth Password:</label>
+                    <input type="text" name="alert_aPass" placeholder="Auth'd User Password" required>
+                </li>
+                <li>
+                    <label for="alert_fromEmail" class="gray-text-label">From Address:</label>
+                    <input type="text" name="alert_fromEmail" placeholder="Who is this coming from?" required>
+                </li>
+            </ul>
+            <input type="submit" value="Add SMTP Server" class="nmap-button-green">
+            <button onclick="toggleForm('infoModal_alerts_smtp_create')" class="nmap-button-red-alt">Cancel</button>
+        </form>
+    </div>
+
+
+    <div id="infoModal_Smtp" class="modal_info"> <!-- This is the display pop up for the SMTP Config -->
+        <p class="ptext_modal">SMTP Commands <span onclick="toggleForm('infoModal_Smtp')" style="cursor: pointer; color: red; font-size: 20px;">&times;</span> </p>
+        <button onclick="toggleForm('infoModal_alerts_create')" class="nmap-button-green">Create a New Alert Target</button>
+        <button onclick="toggleForm('infoModal_alerts_smtp_create')" class="nmap-button-green">Create a New SMTP Target</button>
+        <br>
+        <a href="{{ url_for('scale_api_alerts', cmd='view_alert_smtp_config') }}" class="nmap-button-blue">View Alert SMTP Config</a>
+        <a href="{{ url_for('scale_api_alerts', cmd='view_alert_syslog_target') }}" class="nmap-button-blue">View Alert SysLog Target</a>
+        <a href="{{ url_for('scale_api_alerts', cmd='view_alert_targets') }}" class="nmap-button-blue">View Alert Targets</a>
+        <br>
+        <a href="{{ url_for('scale_api_alerts', cmd='edit_alert') }}" class="nmap-button-yellow">Edit Alert Targets</a>
+        <br>
+        <a href="{{ url_for('scale_api_alerts', cmd='delete_alert') }}" class="nmap-button-red-alt">Delete an Alert Target</a>
+    </div>
+
+    <div id="infoModal_SnapShot" class="modal_info"> <!-- This is the display pop up for the SnapShot Menu-->
+        <p class="ptext_modal">SnapShot Commands <span onclick="toggleForm('infoModal_SnapShot')" style="cursor: pointer; color: red; font-size: 20px;">&times;</span>  </p>
+        
+        <a href="{{ url_for('scale_api_snapshots', cmd='check_csnaps') }}" class="nmap-button-blue">INFO: Snapshots Running</a>
+        <br>
+        <a href="{{ url_for('scale_api_snapshots', cmd='pull_snaps') }}" class="nmap-button-blue">INFO: Snapshot Report (All)</a>
+        <br>
+        <a href="{{ url_for('scale_api_snapshots', cmd='check_snaps') }}" class="nmap-button-blue">INFO: Snapshot Report (Consistency)</a>
+        <br>
+        <button onclick="toggleForm('infoModal_SnapCreate')" class="nmap-button-green">Create a Snap</button>
+        <br>
+        <button onclick="toggleForm('infoModal_SnapScheduleCreate')" class="nmap-button-green">Create a Snap Schedule</button>
+        <br>
+        <a href="{{ url_for('scale_api_snapshots', cmd='check_snapSchedule') }}" class="nmap-button-blue">INFO: Snapshot Schedules + uuids</a>
+        <br>
+        <a href="{{ url_for('scale_api_snapshots', cmd='delete_snap') }}" class="nmap-button-red-alt">Delete a snap</a>
+    </div>
+
+    <div id="infoModal_VDI" class="modal_info"> <!-- This is the display pop up for the VDI Menu -->
+        <p class="ptext_modal">VM Commands <span onclick="toggleForm('infoModal_VDI')" style="cursor: pointer; color: red; font-size: 20px;">&times;</span> </p>
+        <button onclick="toggleForm('infoModal_VDI_create')" class="nmap-button-green">Create a VDI (PXE boot image)</button>
+        <button onclick="toggleForm('infoModal_VDI_clone')" class="nmap-button-green">Clone a VDI (Standard Clone)</button>
+        <button onclick="toggleForm('infoModal_VDI_change')" class="nmap-button-yellow">Change Status of a VDI (Edit)</button>
+        <button onclick="toggleForm('infoModal_VDI_switch')" class="nmap-button-yellow">Change Properties of a VDI</button>
+        <br><br><br>
+        <p class="ptext_modal">VM Search</p>
+        <button onclick="toggleForm('infoModal_VDI_searchStats')" class="nmap-button-yellow">Pull Status for a VDI</button>
+        <button onclick="toggleForm('infoModal_VDI_search')" class="nmap-button">Search for a VDI</button>
+        <button onclick="toggleForm('infoModal_VDI_search_block')" class="nmap-button">Search for a VDIs' Stor Devices</button>
+        <br><br><br>
+        <p class="ptext_modal">VM Stats: Information</p>
+        <a href="{{ url_for('scale_api_vdi', cmd='VDI_pull') }}" class="nmap-button-blue">Read all VDI's</a><br>
+        <a href="{{ url_for('scale_api_vdi', cmd='VDI_net') }}" class="nmap-button-blue">Read all VDI Net Devices</a><br>
+        <a href="{{ url_for('scale_api_vdi', cmd='VDI_stor') }}" class="nmap-button-blue">Read all VDI Stor Devices</a><br>
+        <a href="{{ url_for('scale_api_vdi', cmd='VDI_affinity') }}" class="nmap-button-blue">Read VDI Affinity Setup</a><br>
+        <a href="{{ url_for('scale_api_vdi', cmd='VDI_reps') }}" class="nmap-button-blue">Read VDI Replication Setup</a><br>
+        
+    </div>
+
+    <div class="container"> <!-- This is the output container for all results -->
+        <div class="header">Output</div>
+        <button class="collapse-btn" onclick="togglePanel()">Collapse</button>
+        <div id="outputPanel" class="output-panel expanded">
+            <button class="copy-btn" onclick="copyOutput()">Copy</button>
+            <pre id="jsonResult">{{ result | safe }}</pre>
+        </div>
+    </div>
+    
+</body>
+<script>
+    // Function to toggle the visibility of the popup, its redundant of toggleForm but its okay.
+    function toggleForm(formId) {
+        var form = document.getElementById(formId);
+        form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+        
+    }
+
+    function togglePopup() {
+            var popupContainer = document.getElementById('popupNavi');
+            popupContainer.style.top = (popupContainer.style.top === '0px') ? '-100%' : '0px';
+    }
+
+    function copyOutput() {
+        const text = document.getElementById("jsonResult").innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied to clipboard!");
+        });
+    }
+
+    function togglePanel() {
+        const panel = document.getElementById("outputPanel");
+        panel.classList.toggle("collapsed");
+    }
+    
+</script>
+</html>
